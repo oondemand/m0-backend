@@ -1,0 +1,313 @@
+openapi: 3.1.0
+info:
+  title: Invoice Europartner API
+  description: API para gerar Invoices integrada as OSs do Omie
+  version: 0.0.4
+  contact:
+    name: Fabio
+    email: fabio@oondemand.com.br
+
+servers:
+  - url: https://api.oondemand.com.br/invoice-europartner
+    description: Servidor de Produção
+
+components:
+  schemas:
+    Usuario:
+      type: object
+      properties:
+        nome:
+          type: string
+        email:
+          type: string
+        senha:
+          type: string
+        status:
+          type: string
+          enum: [ativo, inativo]
+        permissoes:
+          type: array
+          items:
+            type: string
+    BaseOmie:
+      type: object
+      properties:
+        nome:
+          type: string
+        cnpj:
+          type: string
+        omieAppKey:
+          type: string
+        omieAppSecret:
+          type: string
+        status:
+          type: string
+          enum: [ativo, inativo, arquivado]
+    Log:
+      type: object
+      properties:
+        usuario:
+          type: string
+          description: ID do usuário que fez a requisição
+        endpoint:
+          type: string
+        metodo:
+          type: string
+        ip:
+          type: string
+        dadosRequisicao:
+          type: object
+        dadosResposta:
+          type: object
+        statusResposta:
+          type: number
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /auth/registrar-usuario:
+    post:
+      summary: Registrar primeiro usuário do sistema
+      operationId: registrarPrimeiroUsuario
+      requestBody:
+        description: Dados para registrar o primeiro usuário do sistema
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Usuario'
+      responses:
+        '201':
+          description: Usuário registrado com sucesso
+        '400':
+          description: Erro ao registrar o usuário
+
+  /auth/login:
+    post:
+      summary: Login de usuário
+      operationId: loginUsuario
+      requestBody:
+        description: Dados de login
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                senha:
+                  type: string
+      responses:
+        '200':
+          description: Token JWT gerado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+        '401':
+          description: Credenciais inválidas
+
+  /auth/validar-token:
+    get:
+      summary: Validar o token JWT
+      operationId: validarToken
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token válido
+        '401':
+          description: Token inválido ou expirado
+
+  /usuarios:
+    get:
+      summary: Listar todos os usuários
+      operationId: listarUsuarios
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuários
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Usuario'
+    post:
+      summary: Registrar um novo usuário
+      operationId: registrarUsuario
+      requestBody:
+        description: Dados para registrar um novo usuário
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Usuario'
+      responses:
+        '201':
+          description: Usuário registrado com sucesso
+
+  /usuarios/{id}:
+    get:
+      summary: Obter um usuário pelo ID
+      operationId: obterUsuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Usuário encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '404':
+          description: Usuário não encontrado
+    put:
+      summary: Atualizar um usuário pelo ID
+      operationId: atualizarUsuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Dados atualizados do usuário
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Usuario'
+      responses:
+        '200':
+          description: Usuário atualizado com sucesso
+        '404':
+          description: Usuário não encontrado
+    delete:
+      summary: Excluir um usuário pelo ID
+      operationId: excluirUsuario
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Usuário excluído com sucesso
+        '404':
+          description: Usuário não encontrado
+
+  /bases-omie:
+    get:
+      summary: Listar todas as bases Omie
+      operationId: listarBasesOmie
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Lista de bases Omie
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BaseOmie'
+    post:
+      summary: Criar uma nova base Omie
+      operationId: criarBaseOmie
+      requestBody:
+        description: Dados para criar uma nova base Omie
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseOmie'
+      responses:
+        '201':
+          description: Base Omie criada com sucesso
+
+  /bases-omie/{id}:
+    get:
+      summary: Obter uma base Omie pelo ID
+      operationId: obterBaseOmie
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Base Omie encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseOmie'
+        '404':
+          description: Base Omie não encontrada
+    patch:
+      summary: Atualizar uma base Omie pelo ID
+      operationId: atualizarBaseOmie
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: Dados atualizados da base Omie
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaseOmie'
+      responses:
+        '200':
+          description: Base Omie atualizada com sucesso
+        '404':
+          description: Base Omie não encontrada
+    delete:
+      summary: Excluir uma base Omie pelo ID
+      operationId: excluirBaseOmie
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Base Omie excluída com sucesso
+        '404':
+          description: Base Omie não encontrada
+
+  /status:
+    get:
+      summary: Verificar o status do serviço e a conexão com o MongoDB
+      operationId: getStatus
+      responses:
+        '200':
+          description: Status do serviço
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  database:
+                    type: string

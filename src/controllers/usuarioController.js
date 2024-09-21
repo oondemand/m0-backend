@@ -1,10 +1,10 @@
 // backend/controllers/UsuarioController.js
 
-const Usuario = require('../models/Usuario');
+const Usuario = require('../models/usuario');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-exports.seedUsuario = async (req, res) => {
+exports.registrarUsuario = async (req, res) => {
     const { nome, email, senha, status, permissoes } = req.body;
     try {
         // Verifica se há algum usuário ativo no banco de dados
@@ -22,6 +22,24 @@ exports.seedUsuario = async (req, res) => {
         res.status(400).json({ error: 'Erro ao registrar usuário' });
     }
 };
+
+exports.registrarPrimeiroUsuario = async (req, res) => {
+    const { nome, email, senha, status, permissoes } = req.body;
+    try {
+        // Verificar se existe algum usuário ativo
+        const usuarioAtivo = await Usuario.findOne({ status: 'ativo' });
+        if (usuarioAtivo) {
+            return res.status(400).json({ error: 'Já existe um usuário ativo' });
+        }
+
+        // Criar e salvar o novo usuário
+        const novoUsuario = new Usuario({ nome, email, senha, status, permissoes });
+        await novoUsuario.save();
+        res.status(201).json(novoUsuario);
+    } catch (error) {
+        res.status(400).json({ error: 'Erro ao registrar usuário' });
+    }
+}
 
 exports.registrarUsuario = async (req, res) => {
     const { nome, email, senha, status, permissoes } = req.body;
